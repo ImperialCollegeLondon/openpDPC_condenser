@@ -45,7 +45,7 @@ public class Para {
 
     public static final String sepkvjson = ":";
     public static final String seplinejson = ",";
-    public static final String sepsimplestr = ":";
+    public static final String sepsimplestr = "@";
 
 // -------------------------    -------------------------   -------------------------
     private String name_;
