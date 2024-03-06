@@ -89,8 +89,27 @@ public class Choose_Python_Panel extends javax.swing.JPanel {
         return conda_envs;
     }
 
+    public String get_conda_activate_filepath(String conda_path) {
+        String osname = System.getProperty("os.name");
+        if (osname.startsWith("Windows")) {
+            return conda_path + sep + "Scripts" + sep + "activate";
+        } else {
+            return conda_path + sep + "etc" + sep + "profile.d" + sep + "conda.sh";
+        }
+    }
+
+    public String get_conda_activate_runfilecmd(String conda_path) {
+        String osname = System.getProperty("os.name");
+        if (osname.startsWith("Windows")) {
+            return "";
+        } else {
+            return "source ";
+        }
+    }
+
     public String get_conda_activate_cmd(String conda_path) {
-        return conda_path + sep + "Scripts" + sep + "activate";
+        return get_conda_activate_runfilecmd(conda_path)
+                + get_conda_activate_filepath(conda_path);
     }
 
     public String get_conda_deactivate_cmd() {
@@ -136,12 +155,13 @@ public class Choose_Python_Panel extends javax.swing.JPanel {
     }
 
     private ArrayList<String> get_pyenv_from_conda_path(String conda_path) {
+        String conda_activate_filepathstr = get_conda_activate_filepath(conda_path);
         String conda_activate_str = get_conda_activate_cmd(conda_path);
         String conda_get_pyenv_str = get_conda_env_list_cmd();
         String conda_deactivate_str = get_conda_deactivate_cmd();
         String endsign = "finished";
 
-        if (new File(conda_path).exists() && new File(conda_activate_str).exists()) {
+        if (new File(conda_path).exists() && new File(conda_activate_filepathstr).exists()) {
             cmdrun.startProcess(true);
             cmdrun.Write(conda_activate_str, true);
             cmdrun.Write(conda_get_pyenv_str, true);
@@ -151,9 +171,19 @@ public class Choose_Python_Panel extends javax.swing.JPanel {
             ArrayList<String> lines = cmdrun.waitUntilRecv(endsign, 30, true);
 
             cmdrun.stopProcess(1, true);
+            
+            if (!pythonenv_cbx.getToolTipText().isEmpty()) {
+                pythonenv_cbx.setToolTipText("");
+            }
 
             return get_pyenv_from_arylist(lines);
         } else {
+            String errtext = "Conda activation file not exist\n"
+                    + "conda_path: " + conda_path + "\n"
+                    + "conda_activate_filepath: " + conda_activate_filepathstr;
+             
+            pythonenv_cbx.setToolTipText(
+                    "<html>" + errtext.replaceAll("\n", "<br>") + "</html>");
             return new ArrayList<>();
         }
     }
