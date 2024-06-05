@@ -1,13 +1,13 @@
 current_preset:
 "preset name"@"String"@"preset0"@""@""@"false"
 "NA_illu"@"Double"@"0.55"@""@"0.0"@"false"
-"lbd_um"@"Double"@"0.632"@""@"0.0"@"false"
-"NA_img"@"Double"@"0.25"@""@"0.0"@"false"
-"mag"@"Double"@"5.8"@""@"0.0"@"false"
-"seq"@"Integer"@"1"@"7"@"0"@"false"
+"lbd_um"@"Double"@"0.628"@""@"0.0"@"false"
+"NA_img"@"Double"@"0.4"@""@"0.0"@"false"
+"mag"@"Double"@"20.0"@""@"0.0"@"false"
+"seq"@"Integer"@"7"@"7"@"0"@"false"
 "binning"@"Integer"@"1"@""@"1"@"false"
 "use_pupil"@"Boolean"@"false"@""@""@"false"
-"reg_p"@"Double"@"0.01"@""@"0.0"@"false"
+"reg_p"@"Double"@"0.005"@""@"0.0"@"false"
 "reg_u"@"Double"@"1.0E-5"@""@""@"false"
 "px_cam_um"@"Double"@"3.45"@""@"0.0"@"false"
 "Q2S"@"String"@"[[1.0, 0.5, 0.5, 0.0], [0.5, 1.0, 0.0, 0.5], [ 0.5, 0.0, 1.0, 0.5], [ 0.0, 0.5, 0.5, 1.0]]"@""@""@"true"
@@ -22,6 +22,6 @@ current_preset:
 "dark_bkg_path"@"String"@"None"@""@""@"true"
 "light_bkg_path"@"String"@"None"@""@""@"true"
 allpresets:
-{"dark_bkg_path":{"preset0":"None"},"NA_illu":{"preset0":"0.55"},"binning":{"preset0":"1"},"quadRotate_rad":{"preset0":"0.0"},"preset name":{"preset0":"preset0"},"NA_img":{"preset0":"0.25"},"reg_p":{"preset0":"0.01"},"mag":{"preset0":"5.8"},"light_bkg_path":{"preset0":"None"},"Q2S":{"preset0":"[[1.0, 0.5, 0.5, 0.0], [0.5, 1.0, 0.0, 0.5], [ 0.5, 0.0, 1.0, 0.5], [ 0.0, 0.5, 0.5, 1.0]]"},"condenser_f_mm":{"preset0":"30.0"},"P_OffAxisYX_mm":{"preset0":"[0.0, 0.0]"},"lbd_um":{"preset0":"0.632"},"use_pupil":{"preset0":"false"},"quadGap_mm":{"preset0":"0.0"},"quadNorm_coeff":{"preset0":"[1.0, 1.0, 1.0, 1.0]"},"px_cam_um":{"preset0":"3.45"},"S_OffAxisYX_mm":{"preset0":"[0.0, 0.0]"},"sp_pattern":{"preset0":"1"},"objective_f_mm":{"preset0":"18.0"},"seq":{"preset0":"1"},"reg_u":{"preset0":"1.0E-5"}}
+{"dark_bkg_path":{"preset0":"None"},"NA_illu":{"preset0":"0.55"},"binning":{"preset0":"1"},"quadRotate_rad":{"preset0":"0.0"},"preset name":{"preset0":"preset0"},"NA_img":{"preset0":"0.4"},"reg_p":{"preset0":"0.01"},"mag":{"preset0":"20.0"},"light_bkg_path":{"preset0":"None"},"Q2S":{"preset0":"[[1.0, 0.5, 0.5, 0.0], [0.5, 1.0, 0.0, 0.5], [ 0.5, 0.0, 1.0, 0.5], [ 0.0, 0.5, 0.5, 1.0]]"},"condenser_f_mm":{"preset0":"30.0"},"P_OffAxisYX_mm":{"preset0":"[0.0, 0.0]"},"lbd_um":{"preset0":"0.628"},"use_pupil":{"preset0":"false"},"quadGap_mm":{"preset0":"0.0"},"quadNorm_coeff":{"preset0":"[1.0, 1.0, 1.0, 1.0]"},"px_cam_um":{"preset0":"3.45"},"S_OffAxisYX_mm":{"preset0":"[0.0, 0.0]"},"sp_pattern":{"preset0":"1"},"objective_f_mm":{"preset0":"18.0"},"seq":{"preset0":"7"},"reg_u":{"preset0":"1.0E-5"}}
 preset_names:
 ["preset0"]

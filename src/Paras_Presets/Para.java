@@ -5,6 +5,7 @@
 package Paras_Presets;
 
 import com.google.gson.Gson;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -362,7 +363,9 @@ public class Para {
 
         String value_to_set = default_value;
         try {
-            value_to_set = String.valueOf(ALLOWED_PARA_TYPE.get(type_id_).getConstructor(String.class).newInstance(value));
+            Class<?> myClassType = Class.forName(ALLOWED_PARA_TYPE.get(type_id_).getName());
+            Constructor<?> construct_ut = myClassType.getConstructor(new Class<?>[]{String.class});
+            value_to_set = String.valueOf(construct_ut.newInstance(value));
         } catch (Exception e) {
             if (value == null || value.equalsIgnoreCase("null") || value.equals("")) {
                 value_to_set = null;

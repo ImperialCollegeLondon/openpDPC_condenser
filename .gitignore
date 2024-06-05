@@ -4,6 +4,16 @@
 /nbproject/project.properties
 /CoreLogs/
 
+
+# pycharm setting files
+/src/Resources/.idea/
+
+# ignore python files in progress 
+/src/Resources/*.pyc
+/src/Resources/*.py
+!/src/Resources/pDPC.py 
+/docs/media_pool/
+
 # Compiled class file
 *.class
 

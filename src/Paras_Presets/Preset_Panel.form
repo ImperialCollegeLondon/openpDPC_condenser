@@ -16,9 +16,10 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="advanced_panel" max="32767" attributes="0"/>
                   <Component id="all_presets_scrollpane" alignment="0" max="32767" attributes="0"/>
                   <Component id="current_paras_scrollpane" alignment="1" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
@@ -32,7 +33,6 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="advanced_panel" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
@@ -60,7 +60,7 @@
               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="all_presets_scrollpane" min="-2" pref="250" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace pref="18" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -123,43 +123,44 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="1" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
-                          <Component id="label7" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="combo_current_preset_name" min="-2" pref="150" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                      <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="label7" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="combo_current_preset_name" min="-2" pref="150" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Component id="bt_print_current_paras" linkSize="1" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="bt_jsonto_current_paras" linkSize="1" min="-2" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
-                      <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="jScrollPane2" alignment="0" min="-2" pref="289" max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" alignment="0" min="-2" pref="281" max="-2" attributes="0"/>
-                      <Component id="bt_print_current_paras" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="jScrollPane2" max="32767" attributes="0"/>
                   </Group>
-                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="para_editor_pane" alignment="1" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace type="separate" max="32767" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" alignment="1" attributes="0">
-                                  <Component id="tbt_advance_mode_on" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace min="-2" pref="31" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="bt_save_this_preset" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace min="-2" pref="27" max="-2" attributes="0"/>
-                              </Group>
+                              <Component id="tbt_advance_mode_on" min="-2" max="-2" attributes="0"/>
+                              <Component id="bt_save_this_preset" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="103" groupAlignment="1" attributes="0">
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="cbx_show_advparams" min="-2" max="-2" attributes="0"/>
                               <Component id="bt_remove_preset" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace max="32767" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="tbt_para_edit_on" alignment="1" min="-2" max="-2" attributes="0"/>
-                              <Component id="bt_save_allpresets" alignment="1" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="1" attributes="0">
+                              <Component id="tbt_para_edit_on" min="-2" max="-2" attributes="0"/>
+                              <Component id="bt_save_allpresets" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
+                      <Component id="para_editor_pane" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -181,17 +182,20 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jScrollPane2" max="32767" attributes="0"/>
+                          <Component id="jScrollPane2" pref="84" max="32767" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="bt_print_current_paras" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="bt_save_this_preset" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="bt_remove_preset" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="bt_save_allpresets" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="bt_print_current_paras" linkSize="2" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                                  <Component id="bt_save_this_preset" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="bt_jsonto_current_paras" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="bt_remove_preset" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="bt_save_allpresets" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
-                          <EmptySpace pref="34" max="32767" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
                           <Component id="para_editor_pane" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -220,6 +224,11 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="1" attributes="0">
+                              <Component id="this_para_isadv" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="bt_set_this_para" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="label2" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -231,31 +240,24 @@
                               </Group>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="label5" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="this_para_min" alignment="0" min="-2" pref="105" max="-2" attributes="0"/>
-                                  <Component id="label3" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="this_para_type" min="-2" pref="105" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
-                                      <Component id="label1" min="-2" max="-2" attributes="0"/>
+                                      <Component id="label5" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace pref="71" max="32767" attributes="0"/>
+                                      <Component id="bt_remove_this_para" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="this_para_min" alignment="0" min="-2" pref="105" max="-2" attributes="0"/>
+                                          <Component id="label3" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="this_para_type" min="-2" pref="105" max="-2" attributes="0"/>
+                                      </Group>
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
-                                  <Group type="102" alignment="1" attributes="0">
-                                      <Component id="this_para_isadv" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace pref="158" max="32767" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="bt_remove_this_para" min="-2" max="-2" attributes="0"/>
-                                          <Component id="bt_set_this_para" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
                               </Group>
-                              <EmptySpace max="32767" attributes="0"/>
                           </Group>
+                          <Component id="label1" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
+                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -444,7 +446,6 @@
           <SubComponents>
             <Component class="javax.swing.JTextArea" name="ta_current_paras_jstr">
               <Properties>
-                <Property name="editable" type="boolean" value="false"/>
                 <Property name="columns" type="int" value="20"/>
                 <Property name="lineWrap" type="boolean" value="true"/>
                 <Property name="rows" type="int" value="5"/>
@@ -489,7 +490,7 @@
         </Container>
         <Component class="javax.swing.JButton" name="bt_print_current_paras">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Print current setting json:"/>
+            <Property name="text" type="java.lang.String" value="Print current setting as json"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bt_print_current_parasActionPerformed"/>
@@ -520,6 +521,14 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bt_save_allpresetsActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JButton" name="bt_jsonto_current_paras">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Update json to current setting"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bt_jsonto_current_parasActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>

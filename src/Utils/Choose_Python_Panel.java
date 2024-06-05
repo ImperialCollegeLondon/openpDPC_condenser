@@ -10,6 +10,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -171,7 +173,7 @@ public class Choose_Python_Panel extends javax.swing.JPanel {
             ArrayList<String> lines = cmdrun.waitUntilRecv(endsign, 30, true);
 
             cmdrun.stopProcess(1, true);
-            
+
             if (!pythonenv_cbx.getToolTipText().isEmpty()) {
                 pythonenv_cbx.setToolTipText("");
             }
@@ -181,7 +183,8 @@ public class Choose_Python_Panel extends javax.swing.JPanel {
             String errtext = "Conda activation file not exist\n"
                     + "conda_path: " + conda_path + "\n"
                     + "conda_activate_filepath: " + conda_activate_filepathstr;
-             
+            Logger.getLogger(Choose_Python_Panel.class.getName())
+                    .log(Level.WARNING, errtext);
             pythonenv_cbx.setToolTipText(
                     "<html>" + errtext.replaceAll("\n", "<br>") + "</html>");
             return new ArrayList<>();
@@ -252,7 +255,7 @@ public class Choose_Python_Panel extends javax.swing.JPanel {
     public void onPanelStart() {
         if (!initialized) {
             initComponents();
-            set_conda_path(System.getProperty("user.home") + sep + "anaconda3");
+//            set_conda_path(System.getProperty("user.home") + sep + "anaconda3");
             initialized = true;
         }
     }

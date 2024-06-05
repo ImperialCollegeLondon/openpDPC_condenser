@@ -33,6 +33,7 @@ from magicgui.experimental import guiclass
 from magicgui.types import FileDialogMode
 from scipy.ndimage import uniform_filter
 from scipy.stats import mode
+from scipy.optimize import nnls
 
 # %% useful constants
 Q2S_ideal = (
@@ -259,21 +260,29 @@ def read_imagej_tif(
 
                 # determine TZYX resolution
                 res_per_unit = [
-                    (ij_mtdt[key] if key in ij_mtdt.keys() else (0 if i == 0 else 1))
-                    if i < 2
-                    else (
-                        (ij_tags.get(key)[1] / ij_tags.get(key)[0])
-                        if key in ij_tags.keys()
-                        else 1
+                    (
+                        (
+                            ij_mtdt[key]
+                            if key in ij_mtdt.keys()
+                            else (0 if i == 0 else 1)
+                        )
+                        if i < 2
+                        else (
+                            (ij_tags.get(key)[1] / ij_tags.get(key)[0])
+                            if key in ij_tags.keys()
+                            else 1
+                        )
                     )
                     for i, key in enumerate(
                         ["finterval", "spacing", "YResolution", "XResolution"]
                     )
                 ]
                 res_unit = [
-                    ij_mtdt[key]
-                    if key in ij_mtdt.keys()
-                    else ("sec" if i == 0 else tiff.TIFF.RESUNIT.NONE)  # "-"
+                    (
+                        ij_mtdt[key]
+                        if key in ij_mtdt.keys()
+                        else ("sec" if i == 0 else tiff.TIFF.RESUNIT.NONE)
+                    )  # "-"
                     for i, key in enumerate(["tunit", "zunit", "yunit", "unit"])
                 ]
 
@@ -341,9 +350,9 @@ def write_imagej_tif(
         tif.write(
             data=data,
             metadata=ij_mtdt,
-            resolution=tuple(1 / res for res in res_info[0][-2:][::-1])
-            if res_info
-            else None,
+            resolution=(
+                tuple(1 / res for res in res_info[0][-2:][::-1]) if res_info else None
+            ),
         )
 
 
@@ -1167,120 +1176,338 @@ if __name__ == "__main__":
                 if exitsign in data:
                     break
                 else:
-                    print(data)
-                    info = goodsign
-                    try:
-                        parse_items = re.findall(
-                            r"((live:)|(recon:))rawPath:(.*); phasePath:(.*); Params:(.*); useAdvParams:(.*)",
-                            data,
-                        )
-                        if parse_items:
-                            live_or_recon = parse_items[0][0].lower()
-                            rawpath = parse_items[0][3]
-                            phasepath = parse_items[0][4]
-                            params = json.loads(parse_items[0][5])
-                            useAdvParams = parse_items[0][6].lower()
-                        else:
-                            raise ValueError("Failed to parse data")
+                    info = goodsign + ":0"
+                    if data.startswith("cali"):
+                        old_seq = pDPC_ut.seq
+                        try:
+                            # cali mode
+                            parse_items = re.findall(r"cali:(.*)", data)
+                            if parse_items:
+                                filepath = parse_items[0]
+                            else:
+                                raise ValueError(f"Cali: Failed to parse data. {data}")
 
-                        # set live or recon
-                        is_live = True
-                        if live_or_recon.startswith("l"):
-                            is_live = True
-                        elif live_or_recon.startswith("r"):
-                            is_live = False
-                        else:
-                            raise ValueError("Failed to parse data: " + live_or_recon)
+                            # read file
+                            with open(filepath, "r") as f:
+                                lines = f.readlines()
 
-                        # set params for pDPC_ut
-                        use_advparam = True
-                        if useAdvParams.startswith("t"):
-                            use_advparam = True
-                        elif useAdvParams.startswith("f"):
-                            use_advparam = False
-                        else:
-                            raise ValueError("Failed to parse data: " + useAdvParams)
+                            # receive rest lines of data
+                            quads_only_path = [""] * 4
+                            quads_only_dark_path = ""
+                            light_bkg_path = ""
+                            dark_bkg_path = ""
+                            for line in lines:
+                                if line.startswith("quad1_only:"):
+                                    quads_only_path[0] = json.loads(
+                                        line[len("quad1_only:") :]
+                                    )
+                                elif line.startswith("quad2_only:"):
+                                    quads_only_path[1] = json.loads(
+                                        line[len("quad2_only:") :]
+                                    )
+                                elif line.startswith("quad3_only:"):
+                                    quads_only_path[2] = json.loads(
+                                        line[len("quad3_only:") :]
+                                    )
+                                elif line.startswith("quad4_only:"):
+                                    quads_only_path[3] = json.loads(
+                                        line[len("quad4_only:") :]
+                                    )
+                                elif line.startswith("quad_only_dark_bkg:"):
+                                    quads_only_dark_path = json.loads(
+                                        line[len("quad_only_dark_bkg:") :]
+                                    )
+                                elif line.startswith("light_bkg:"):
+                                    light_bkg_path = json.loads(
+                                        line[len("light_bkg:") :]
+                                    )
+                                elif line.startswith("dark_bkg:"):
+                                    dark_bkg_path = json.loads(line[len("dark_bkg:") :])
 
-                        expect_keys = set(asdict(pDPC_ut).keys())
-                        if not use_advparam:
-                            expect_keys = expect_keys - set(ideal_pDPC_params.keys())
-                            print(
-                                "Using default (ideal) params for: "
-                                + f"{ideal_pDPC_params.keys()}"
+                            pDPC_ut.seq = 0
+
+                            # calculate Q2S
+                            pDPC_ut.dark_bkg_path = quads_only_dark_path
+                            Q2S_cali = []
+                            for i in range(4):
+                                img, _ = read_imagej_tif(
+                                    img_path=quads_only_path[i], tolerant_mode=True
+                                )
+                                img = np.mean(
+                                    img,
+                                    axis=tuple(range(-img.ndim, -2, 1)),
+                                    keepdims=False,
+                                )  # avg raw along non YX axis
+                                subs = pDPC_ut.get_sub_imgs(raw=img)
+
+                                subs_flatten = subs.reshape((subs.shape[0], -1))
+                                subs_flatten = subs_flatten[
+                                    :,
+                                    np.argwhere(
+                                        np.all(
+                                            subs_flatten > 0, axis=-1, keepdims=False
+                                        )
+                                    ).squeeze(),
+                                ]
+
+                                subs_flatten = subs_flatten / subs_flatten[i]
+                                Q2S_cali.append(
+                                    (
+                                        np.median(
+                                            subs_flatten,
+                                            axis=-1,
+                                            keepdims=False,
+                                        )
+                                        .squeeze()
+                                        .tolist()
+                                    )
+                                )
+                            Q2S_cali = np.transpose(Q2S_cali)
+                            Q2S_cali = np.round(Q2S_cali, decimals=3).tolist()
+                            s.sendall(
+                                (f"Q2S_cali={json.dumps(Q2S_cali)}" + "\r\n").encode(
+                                    "utf-8"
+                                )
                             )
 
-                        received_keys = set(params.keys())
-                        assert expect_keys.issubset(received_keys), (
-                            "Params not match. "
-                            + f"Missing params: {[k for k in expect_keys if k not in received_keys]}"
-                        )
+                            # calibrate quadNorm_coeff
+                            pDPC_ut.dark_bkg_path = dark_bkg_path
+                            light_bkg, _ = read_imagej_tif(
+                                img_path=light_bkg_path, tolerant_mode=True
+                            )
+                            light_bkg = np.mean(
+                                light_bkg,
+                                axis=tuple(range(-light_bkg.ndim, -2, 1)),
+                                keepdims=False,
+                            )  # avg raw along non YX axis
+                            light_subs = pDPC_ut.get_sub_imgs(raw=light_bkg)
 
-                        try:
-                            know = ""
-                            for k in list(expect_keys):
-                                know = k
-                                vnow = params[k]
-                                if vnow is None and k not in [
-                                    "dark_bkg_path",
-                                    "light_bkg_path",
-                                ]:
-                                    raise Exception(f"Param {k} MUST not be None")
-                                else:
-                                    getattr(pDPC_ut.gui, k).value = (
-                                        vnow
-                                        if not isinstance(vnow, str)
-                                        else literal_eval(vnow)
+                            # calculate quadNorm_coeff here
+                            quadNorm_coeff = []
+                            if len(Q2S_cali) > 0:
+                                s.sendall(
+                                    (f"Start cali quadNorm_coeff" + "\r\n").encode(
+                                        "utf-8"
                                     )
-                        except Exception as e:
-                            raise Exception(f"Failed to set params {know}: {e:}")
-
-                        if not is_live:
-                            info = goodsign + ":0"
-                            s.sendall((info + "\r\n").encode("utf-8"))
-
-                        # pDPC recon
-                        raw, _ = read_imagej_tif(img_path=rawpath, tolerant_mode=True)
-
-                        h, w = raw.shape[-2:]
-                        oldshape = raw.shape[:-2]
-                        raw_3d = np.reshape(raw, newshape=(-1, h, w))
-
-                        if is_live:
-                            phase_3d = pDPC_ut.recon(raw=raw_3d)
-                        else:
-                            phase_3d = []
-                            for i in range(raw_3d.shape[0]):
-                                phase_3d.append(pDPC_ut.recon(raw=raw_3d[i]))
-                                info = (
-                                    goodsign
-                                    + f":{max(0, ((100*(i+1))//raw_3d.shape[0])-1):d}"
                                 )
+
+                                # flatten light_subs and remove invalid indexes
+                                light_subs_flatten = np.moveaxis(
+                                    light_subs.reshape((light_subs.shape[0], -1)), 0, -1
+                                )
+                                valid_indexes = np.argwhere(
+                                    np.all(
+                                        light_subs_flatten > 0, axis=-1, keepdims=False
+                                    )
+                                ).squeeze()
+                                light_subs_flatten = light_subs_flatten[
+                                    valid_indexes, :
+                                ]
+
+                                # params for calculation
+                                sz = valid_indexes.size
+                                loopnum = 100
+                                indexnum = min(sz, 5000)
+
+                                # loop to calculate potential quadNorm_coeff
+                                potential_quadNorm_coeffs = []
+                                for i in range(loopnum):
+                                    # for each loop, randomly choose indexnum indexes
+                                    indexes_used = np.random.choice(
+                                        a=sz,
+                                        size=indexnum,
+                                        replace=False,
+                                    )
+                                    # for each index, calculate nnls results
+                                    nnls_results = sorted(
+                                        [
+                                            nnls(
+                                                np.asarray(Q2S_cali),
+                                                light_subs_flatten[ind, :],
+                                            )
+                                            for ind in indexes_used
+                                        ],
+                                        key=lambda x: x[1],
+                                    )
+                                    # filter out invalid results
+                                    nnls_results = list(
+                                        filter(
+                                            lambda x: all(v > 0 for v in x[0]),
+                                            nnls_results,
+                                        )
+                                    )
+                                    if len(nnls_results) < 1:
+                                        continue
+                                    # calculate median of valid results as one potential quadNorm_coeff
+                                    sols, residuals = zip(*nnls_results)
+                                    sols = np.asarray(
+                                        [[v / (sol[0]) for v in sol] for sol in sols]
+                                    )
+                                    result = np.median(sols, axis=0).tolist()
+                                    # store valid results
+                                    potential_quadNorm_coeffs.append(result)
+                                    s.sendall(
+                                        (
+                                            f"quadNorm_coeff loop {i+1}/{loopnum}: {np.round(result, decimals=3).tolist()}"
+                                            + "\r\n"
+                                        ).encode("utf-8")
+                                    )
+
+                                # calculate median of all potential quadNorm_coeff
+                                if len(potential_quadNorm_coeffs) > 0:
+                                    quadNorm_coeff = np.median(
+                                        potential_quadNorm_coeffs, axis=0
+                                    ).tolist()
+                                    quadNorm_coeff = np.round(
+                                        quadNorm_coeff, decimals=3
+                                    ).tolist()
+                                    s.sendall(
+                                        (
+                                            f"quadNorm_coeff={json.dumps(quadNorm_coeff)}"
+                                            + "\r\n"
+                                        ).encode("utf-8")
+                                    )
+
+                            # if properly finished, set info to goodsign and calibration matrix
+                            mtx_dict = {
+                                "Q2S": json.dumps(Q2S_cali),
+                                "quadNorm_coeff": json.dumps(quadNorm_coeff),
+                            }
+                            if len(Q2S_cali) > 0:
+                                if len(quadNorm_coeff) <= 0:
+                                    mtx_dict.pop("quadNorm_coeff")
+                                info = goodsign + ":" + json.dumps(mtx_dict)
+                            else:
+                                raise ValueError(
+                                    f"Failed to calibrate valid matrix: {json.dumps(mtx_dict) }"
+                                )
+                        except Exception as e:
+                            info = badsign + f": cali:{e}"
+                        pDPC_ut.seq = old_seq
+                    else:
+                        try:
+                            parse_items = re.findall(
+                                r"((live:)|(recon:))rawPath:(.*); phasePath:(.*); Params:(.*); useAdvParams:(.*)",
+                                data,
+                            )
+                            if parse_items:
+                                live_or_recon = parse_items[0][0].lower()
+                                rawpath = parse_items[0][3]
+                                phasepath = parse_items[0][4]
+                                params = json.loads(parse_items[0][5])
+                                useAdvParams = parse_items[0][6].lower()
+                            else:
+                                raise ValueError(f"Failed to parse data")
+
+                            # set live or recon
+                            is_live = True
+                            if live_or_recon.startswith("l"):
+                                is_live = True
+                            elif live_or_recon.startswith("r"):
+                                is_live = False
+                            else:
+                                raise ValueError(
+                                    "Failed to parse data: " + live_or_recon
+                                )
+
+                            # set params for pDPC_ut
+                            use_advparam = True
+                            if useAdvParams.startswith("t"):
+                                use_advparam = True
+                            elif useAdvParams.startswith("f"):
+                                use_advparam = False
+
+                                # set adv pDPC params back to default (ideal) params
+                                for k, v in ideal_pDPC_params.items():
+                                    getattr(pDPC_ut.gui, k).value = v
+                            else:
+                                raise ValueError(
+                                    "Failed to parse data: " + useAdvParams
+                                )
+
+                            expect_keys = set(asdict(pDPC_ut).keys())
+                            if not use_advparam:
+                                expect_keys = expect_keys - set(
+                                    ideal_pDPC_params.keys()
+                                )
+                                print(
+                                    "Using default (ideal) params for: "
+                                    + f"{ideal_pDPC_params.keys()}"
+                                )
+
+                            received_keys = set(params.keys())
+                            assert expect_keys.issubset(received_keys), (
+                                "Params not match. "
+                                + f"Missing params: {[k for k in expect_keys if k not in received_keys]}"
+                            )
+
+                            try:
+                                know = ""
+                                for k in list(expect_keys):
+                                    know = k
+                                    vnow = params[k]
+                                    if vnow is None and k not in [
+                                        "dark_bkg_path",
+                                        "light_bkg_path",
+                                    ]:
+                                        raise Exception(f"Param {k} MUST not be None")
+                                    else:
+                                        getattr(pDPC_ut.gui, k).value = (
+                                            vnow
+                                            if not isinstance(vnow, str)
+                                            else literal_eval(vnow)
+                                        )
+                            except Exception as e:
+                                raise Exception(f"Failed to set params {know}: {e:}")
+
+                            if not is_live:
+                                info = goodsign + ":0"
                                 s.sendall((info + "\r\n").encode("utf-8"))
-                            info = goodsign + f":100"
-                            phase_3d = np.stack(phase_3d, axis=0)
 
-                        phase = np.reshape(
-                            phase_3d, newshape=oldshape + phase_3d.shape[-2:]
-                        )
+                            # pDPC recon
+                            raw, _ = read_imagej_tif(
+                                img_path=rawpath, tolerant_mode=True
+                            )
 
-                        if is_live:
-                            # subtract phase image mode before saving
-                            hist, bin_edges = np.histogram(phase[:], bins=256)
-                            idx = np.argmax(hist)
-                            modevalue = (bin_edges[idx] + bin_edges[idx + 1]) / 2
-                            print(modevalue)
-                            # modevalue = mode(phase[:] ,keepdims=False)[0]
-                            phase = phase - modevalue
+                            h, w = raw.shape[-2:]
+                            oldshape = raw.shape[:-2]
+                            raw_3d = np.reshape(raw, newshape=(-1, h, w))
 
-                        write_imagej_tif(
-                            sv_path=phasepath,
-                            data=phase,
-                            res_info=None,
-                            description=pDPC_ut.get_json(),
-                        )
+                            if is_live:
+                                phase_3d = pDPC_ut.recon(raw=raw_3d)
+                            else:
+                                phase_3d = []
+                                for i in range(raw_3d.shape[0]):
+                                    phase_3d.append(pDPC_ut.recon(raw=raw_3d[i]))
+                                    info = (
+                                        goodsign
+                                        + f":{max(0, ((100*(i+1))//raw_3d.shape[0])-1):d}"
+                                    )
+                                    s.sendall((info + "\r\n").encode("utf-8"))
+                                info = goodsign + f":100"
+                                phase_3d = np.stack(phase_3d, axis=0)
 
-                    except Exception as e:
-                        info = badsign + f":{e}"
+                            phase = np.reshape(
+                                phase_3d, newshape=oldshape + phase_3d.shape[-2:]
+                            )
+
+                            if is_live:
+                                # subtract phase image mode before saving
+                                hist, bin_edges = np.histogram(phase[:], bins=256)
+                                idx = np.argmax(hist)
+                                modevalue = (bin_edges[idx] + bin_edges[idx + 1]) / 2
+                                print(modevalue)
+                                # modevalue = mode(phase[:] ,keepdims=False)[0]
+                                phase = phase - modevalue
+
+                            write_imagej_tif(
+                                sv_path=phasepath,
+                                data=phase,
+                                res_info=None,
+                                description=pDPC_ut.get_json(),
+                            )
+                        except Exception as e:
+                            info = badsign + f":{e}"
 
                     s.sendall((info + "\r\n").encode("utf-8"))
         s.close()

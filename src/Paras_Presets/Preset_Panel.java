@@ -4,14 +4,18 @@
  */
 package Paras_Presets;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.awt.Component;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.table.AbstractTableModel;
@@ -43,8 +47,57 @@ public class Preset_Panel extends javax.swing.JPanel {
             }
         });
     }
+    
+    // ---------------------------------    ---------------------------------  
+    public String get_ta_current_paras_jstr(){
+        return ta_current_paras_jstr.getText();
+    }
 
     // ---------------------------------    ---------------------------------    ---------------------------------    ---------------------------------    
+    public void jsonto_current_settings(String jstr) {
+        Gson gson = new Gson();
+        String logText = "";
+        HashMap<String, Object> json_dict = new HashMap<>();
+        Type type_dict = new TypeToken<HashMap<String, Object>>() {
+        }.getType();
+
+        try {
+            json_dict = gson.fromJson(jstr, type_dict);
+        } catch (Exception ex) {
+            logText = logText.concat("Failed to convert json string into a map of para_name->para_value: "
+                    + "\n" + ex.toString());
+        }
+
+        if (json_dict != null && !json_dict.isEmpty() && current_paras_table != null) {
+            int para_names_cnt = current_paras_table.getColumnCount();
+
+            if (para_names_cnt > 0) {
+                for (int i = 0; i < para_names_cnt; i++) {
+                    String col_name = current_paras_table.getColumnName(i);
+
+                    if (json_dict.containsKey(col_name)) {
+                        try {
+                            current_paras_table.setValueAt(json_dict.get(col_name), 0, i);
+                            json_dict.remove(col_name);
+                        } catch (Exception ex) {
+                        }
+                    }
+                }
+
+                if (!json_dict.isEmpty()) {
+                    ta_current_paras_jstr.setText(gson.toJson(json_dict, type_dict));
+                } else {
+                    ta_current_paras_jstr.setText("");
+                }
+
+            } else {
+                logText = "No paras exist in column";
+            }
+        }
+
+        ta_log.setText(logText);
+    }
+
     public void set_editable_hideadv(boolean flag) {
         cbx_show_advparams.setEnabled(flag);
     }
@@ -309,7 +362,7 @@ public class Preset_Panel extends javax.swing.JPanel {
 
     private void updateModel_combo_current_preset_name() {
         combo_current_preset_name.setModel(
-                new javax.swing.DefaultComboBoxModel(
+                new javax.swing.DefaultComboBoxModel<String>(
                         presets.get_all_preset_names().toArray(new String[0])
                 )
         );
@@ -319,7 +372,7 @@ public class Preset_Panel extends javax.swing.JPanel {
         ArrayList<String> allparanames = presets.get_para_names_by_mode(hideadv);
         allparanames.remove(presets.preset_name_str);
         this_para_name.setModel(
-                new javax.swing.DefaultComboBoxModel(
+                new javax.swing.DefaultComboBoxModel<String>(
                         allparanames.toArray(new String[0])
                 )
         );
@@ -500,6 +553,11 @@ public class Preset_Panel extends javax.swing.JPanel {
         }
     }
 
+    public void onPress_bt_jsonto_current_paras() {
+        String jstr = ta_current_paras_jstr.getText();
+        jsonto_current_settings(jstr);
+    }
+
 // ---------------------------------    ---------------------------------    ---------------------------------    ---------------------------------    
     public void onPanelStart() {
         if (!initialized) {
@@ -595,6 +653,7 @@ public class Preset_Panel extends javax.swing.JPanel {
         bt_save_this_preset = new javax.swing.JButton();
         bt_remove_preset = new javax.swing.JButton();
         bt_save_allpresets = new javax.swing.JButton();
+        bt_jsonto_current_paras = new javax.swing.JButton();
         current_paras_scrollpane = new javax.swing.JScrollPane();
         current_paras_table = new javax.swing.JTable();
         jLabel3 = new javax.swing.JLabel();
@@ -699,6 +758,10 @@ public class Preset_Panel extends javax.swing.JPanel {
             .addGroup(para_editor_paneLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(para_editor_paneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, para_editor_paneLayout.createSequentialGroup()
+                        .addComponent(this_para_isadv)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(bt_set_this_para))
                     .addGroup(para_editor_paneLayout.createSequentialGroup()
                         .addGroup(para_editor_paneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(label2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -708,23 +771,18 @@ public class Preset_Panel extends javax.swing.JPanel {
                                 .addComponent(this_para_name, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                         .addGap(18, 18, 18)
                         .addGroup(para_editor_paneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(label5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(this_para_min, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(label3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(this_para_type, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(para_editor_paneLayout.createSequentialGroup()
-                        .addGroup(para_editor_paneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(para_editor_paneLayout.createSequentialGroup()
-                                .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, para_editor_paneLayout.createSequentialGroup()
-                                .addComponent(this_para_isadv)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 158, Short.MAX_VALUE)
+                                .addComponent(label5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 71, Short.MAX_VALUE)
+                                .addComponent(bt_remove_this_para))
+                            .addGroup(para_editor_paneLayout.createSequentialGroup()
                                 .addGroup(para_editor_paneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(bt_remove_this_para)
-                                    .addComponent(bt_set_this_para))))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                    .addComponent(this_para_min, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(label3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(this_para_type, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 0, Short.MAX_VALUE))))
+                    .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
         para_editor_paneLayout.setVerticalGroup(
             para_editor_paneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -773,7 +831,6 @@ public class Preset_Panel extends javax.swing.JPanel {
             }
         });
 
-        ta_current_paras_jstr.setEditable(false);
         ta_current_paras_jstr.setColumns(20);
         ta_current_paras_jstr.setLineWrap(true);
         ta_current_paras_jstr.setRows(5);
@@ -797,7 +854,7 @@ public class Preset_Panel extends javax.swing.JPanel {
         ta_log.setWrapStyleWord(true);
         jScrollPane2.setViewportView(ta_log);
 
-        bt_print_current_paras.setText("Print current setting json:");
+        bt_print_current_paras.setText("Print current setting as json");
         bt_print_current_paras.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bt_print_current_parasActionPerformed(evt);
@@ -828,41 +885,52 @@ public class Preset_Panel extends javax.swing.JPanel {
             }
         });
 
+        bt_jsonto_current_paras.setText("Update json to current setting");
+        bt_jsonto_current_paras.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bt_jsonto_current_parasActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout advanced_panelLayout = new javax.swing.GroupLayout(advanced_panel);
         advanced_panel.setLayout(advanced_panelLayout);
         advanced_panelLayout.setHorizontalGroup(
             advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, advanced_panelLayout.createSequentialGroup()
                 .addContainerGap()
+                .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(advanced_panelLayout.createSequentialGroup()
+                            .addComponent(label7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(combo_current_preset_name, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jLabel4)
+                        .addGroup(advanced_panelLayout.createSequentialGroup()
+                            .addComponent(bt_print_current_paras)
+                            .addGap(18, 18, 18)
+                            .addComponent(bt_jsonto_current_paras)))
+                    .addComponent(jScrollPane2))
+                .addGap(18, 18, Short.MAX_VALUE)
                 .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(advanced_panelLayout.createSequentialGroup()
-                        .addComponent(label7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(combo_current_preset_name, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabel4)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 281, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(bt_print_current_paras))
-                .addGap(18, 18, 18)
-                .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(para_editor_pane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(advanced_panelLayout.createSequentialGroup()
                         .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, advanced_panelLayout.createSequentialGroup()
-                                .addComponent(tbt_advance_mode_on)
-                                .addGap(31, 31, 31))
-                            .addGroup(advanced_panelLayout.createSequentialGroup()
-                                .addComponent(bt_save_this_preset)
-                                .addGap(27, 27, 27)))
-                        .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(tbt_advance_mode_on)
+                            .addComponent(bt_save_this_preset))
+                        .addGap(18, 18, 18)
+                        .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cbx_show_advparams)
                             .addComponent(bt_remove_preset))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(tbt_para_edit_on, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(bt_save_allpresets, javax.swing.GroupLayout.Alignment.TRAILING))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(18, 18, 18)
+                        .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(tbt_para_edit_on)
+                            .addComponent(bt_save_allpresets)))
+                    .addComponent(para_editor_pane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(16, 16, 16))
         );
+
+        advanced_panelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bt_jsonto_current_paras, bt_print_current_paras});
+
         advanced_panelLayout.setVerticalGroup(
             advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(advanced_panelLayout.createSequentialGroup()
@@ -880,18 +948,22 @@ public class Preset_Panel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane2))
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 84, Short.MAX_VALUE))
                     .addGroup(advanced_panelLayout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(bt_print_current_paras)
-                            .addComponent(bt_save_this_preset)
-                            .addComponent(bt_remove_preset)
-                            .addComponent(bt_save_allpresets))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 34, Short.MAX_VALUE)
+                            .addGroup(advanced_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(bt_save_this_preset)
+                                .addComponent(bt_jsonto_current_paras)
+                                .addComponent(bt_remove_preset)
+                                .addComponent(bt_save_allpresets)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(para_editor_pane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
+
+        advanced_panelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {bt_jsonto_current_paras, bt_print_current_paras});
 
         current_paras_scrollpane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 
@@ -927,6 +999,7 @@ public class Preset_Panel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(advanced_panel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(all_presets_scrollpane)
                     .addComponent(current_paras_scrollpane, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
@@ -938,8 +1011,7 @@ public class Preset_Panel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2)
-                            .addComponent(jLabel1)
-                            .addComponent(advanced_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jLabel1))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -961,7 +1033,7 @@ public class Preset_Panel extends javax.swing.JPanel {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(all_presets_scrollpane, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1056,12 +1128,20 @@ public class Preset_Panel extends javax.swing.JPanel {
         onPress_save_all_presets();
     }//GEN-LAST:event_bt_save_allpresetsActionPerformed
 
+    private void bt_jsonto_current_parasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bt_jsonto_current_parasActionPerformed
+        // TODO add your handling code here:
+        if (evt.getActionCommand().equals(bt_jsonto_current_paras.getText())) {
+            onPress_bt_jsonto_current_paras();
+        }
+    }//GEN-LAST:event_bt_jsonto_current_parasActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel advanced_panel;
     private javax.swing.JScrollPane all_presets_scrollpane;
     private javax.swing.JTable all_presets_table;
     private javax.swing.JButton bt_choose_preset_filepath;
+    private javax.swing.JButton bt_jsonto_current_paras;
     private javax.swing.JButton bt_print_current_paras;
     private javax.swing.JButton bt_remove_preset;
     private javax.swing.JButton bt_remove_this_para;

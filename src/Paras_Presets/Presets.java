@@ -59,7 +59,9 @@ public class Presets extends Editable_Preset {
         Type type_allpresets = new TypeToken<HashMap<String, HashMap<String, String>>>() {
         }.getType();
         allpresets = gson.fromJson(lines2[0], type_allpresets);
-        preset_names = gson.fromJson(lines2[1], ArrayList.class);
+        
+        Type StringArrayListType = new TypeToken<ArrayList<String>>() {}.getType();
+        preset_names = gson.fromJson(lines2[1], StringArrayListType);
     }
     
     @Override
@@ -79,7 +81,7 @@ public class Presets extends Editable_Preset {
         
         return jstr;
     }
-
+     
 ///////////////////////////////////////////////////////////////////////////////
     public ArrayList<String> get_all_preset_names() {
         return preset_names;
