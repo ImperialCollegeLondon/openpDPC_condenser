@@ -63,7 +63,7 @@ This plugin provides four main features:
 ## Installation 
 
 1. Install [*&mu;Manager*](https://micro-manager.org/Download_Micro-Manager_Latest_Release) (version 2.0.0 or later) if not yet.
-1. Download [MM2_pDPC.jar](../dist/MM2_pDPC.jar) from this repo and place it in the `mmplugins` folder under the *&mu;Manager* installation root.  
+1. Download [MM2_pDPC.jar](https://github.com/ImperialCollegeLondon/openpDPC_condenser/blob/main/dist/MM2_pDPC.jar) from this repo and place it in the `mmplugins` folder under the *&mu;Manager* installation root.  
 
 To check if the plugin is successfully installed, launch *&mu;Manager* and check if the plugin name, `pDPC`, appears in the `Plugins` menu as shown in the figure below. 
 
