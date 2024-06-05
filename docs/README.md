@@ -67,9 +67,9 @@ This plugin provides four main features:
 
 To check if the plugin is successfully installed, launch *&mu;Manager* and check if the plugin name, `pDPC`, appears in the `Plugins` menu as shown in the figure below. 
 
-<p align="center">
+
 <img src=pDPC_in_Plugins_menu.PNG width="75%" title="pDPC in Plugins menu"/>
-</p>  
+
 
 ## Pre-requisite for python-based features 
 
