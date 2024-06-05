@@ -33,12 +33,16 @@ public class SocketComm_Panel extends javax.swing.JPanel {
         return cbx_use_server.isSelected();
     }
 
-    public boolean set_SocketPort(long port) {
+    public String get_SocketPort_string() {
+        return String.valueOf(jsp_port.getValue());
+    }
+
+    public boolean set_SocketPort(int port) {
         if (jsp_port.isEnabled()) {
             jsp_port.setValue(port);
         }
 
-        return ((long) jsp_port.getValue()) == port;
+        return ((int) jsp_port.getValue()) == port;
     }
 
     public String get_SocketPort() {
@@ -50,11 +54,12 @@ public class SocketComm_Panel extends javax.swing.JPanel {
         return onPress_SendLine();
     }
 
-    public ArrayList<String> waitUntilRecv(String endsign, double timeOutSec) {
+    public ArrayList<String> waitUntilRecv(String endsign, double timeOutSec) { 
         String endsign_ = endsign == null ? "null" : endsign;
         jtf_recv_endsign.setText(endsign_);
-        jsp_recv_timeout_sec.setValue(timeOutSec);
-        return onPress_Recv();
+        jsp_recv_timeout_sec.setValue(timeOutSec); 
+        ArrayList<String> output = onPress_Recv();  
+        return output;
     }
 
 // ---------------------------- ---------------------------------- -------------------------

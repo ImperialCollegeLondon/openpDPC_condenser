@@ -4,11 +4,11 @@
  */
 package Utils;
 
-import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.ImageWindow;
 import ij.process.ImageProcessor;
 import java.nio.file.Path;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.Studio;
@@ -30,17 +30,56 @@ public class MM2_utils {
 
     utils ut = new utils();
 
+    public ImageProcessor get_imgproc_from_image(Studio gui, Image raw, boolean verbose) {
+        if (gui == null) {
+            return null;
+        }
+
+        try {
+            ImageProcessor raw_proc = gui.data().ij().createProcessor(
+                    raw.copyAtCoords(
+                            raw.getCoords().copyBuilder().build()
+                    )
+            );
+            return raw_proc;
+        } catch (Exception ex) {
+            if (verbose) {
+                System.out.println("Failed to get imageprocessor from snapped image");
+                ex.printStackTrace(System.out);
+            }
+            Logger.getLogger(MM2_utils.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+
     /**
-     * snap & save an image in MM2 to a path return if the process has been
-     * successful
+     * snap an image in MM2 and return image processor of the snapped image if
+     * succeed otherwise return null
      *
      * @param gui
-     * @param ImgPathStr
      * @param verbose
      * @return
      */
-    public boolean SnapAndSave_Img(Studio gui, String ImgPathStr, boolean verbose) {
+    public Image SnapImg(Studio gui, boolean verbose) {
+        try {
+            gui.getCMMCore().snapImage();
+            gui.getCMMCore().waitForSystem();
 
+            TaggedImage image = gui.getCMMCore().getTaggedImage();
+            Image live_img = gui.getDataManager().convertTaggedImage(image);
+
+            return live_img;
+        } catch (Exception ex) {
+            if (verbose) {
+                System.out.println("Failed to take the snapped image");
+                ex.printStackTrace(System.out);
+            }
+            Logger.getLogger(MM2_utils.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+
+    public boolean SaveImg(ImageProcessor live_img_proc, String ImgPathStr, boolean verbose) {
         Path ImgPath = ut.getPathFromStr(ImgPathStr, verbose);
         if (ImgPath == null || ImgPath.getParent() == null) {
             if (verbose) {
@@ -54,12 +93,7 @@ public class MM2_utils {
         if (DirExist) {
             ImagePlus live_img_plus = null;
             try {
-                gui.getCMMCore().snapImage();
-                gui.getCMMCore().waitForSystem();
-                TaggedImage image = gui.getCMMCore().getTaggedImage();
-                Image live_img = gui.getDataManager().convertTaggedImage(image);
-//                Image live_img = gui.acquisitions().snap().get(0);
-                ImageProcessor live_img_proc = gui.data().ij().createProcessor(live_img);
+                assert live_img_proc != null;
                 live_img_plus = new ImagePlus("", live_img_proc);
             } catch (Exception ex) {
                 if (verbose) {
@@ -86,6 +120,30 @@ public class MM2_utils {
             return false;
         }
 
+    }
+
+    /**
+     * snap & save an image in MM2 to a path return if the process has been
+     * successful
+     *
+     * @param gui
+     * @param ImgPathStr
+     * @param verbose
+     * @return
+     */
+    public boolean SnapAndSave_Img(Studio gui, String ImgPathStr, boolean verbose) {
+        ImageProcessor live_img_proc = null;
+        try {
+            live_img_proc = get_imgproc_from_image(gui, SnapImg(gui, verbose), verbose);
+        } catch (Exception ex) {
+            if (verbose) {
+                System.out.println("Failed to take the snapped image");
+                ex.printStackTrace(System.out);
+            }
+            return false;
+        }
+
+        return SaveImg(live_img_proc, ImgPathStr, verbose); 
     }
 
     /**

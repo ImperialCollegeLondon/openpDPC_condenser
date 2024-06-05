@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,23 +32,16 @@ public class mainPluginFrame extends javax.swing.JFrame {
     private boolean initialize = false;
 
     private String thisPluginName = "MM2_pDPC";
-    private String extThread_pyfilename = "pDPC.py";
-    private String extThread_presetfilename = Preset_Panel.resource_preset_filename;
-    private String extThread_historyfilename = "history";
-
     private String thisPluginFolder = System.getProperty("user.dir")
             + System.getProperty("file.separator")
             + thisPluginName;
-    private String extThread_pyfilepath = thisPluginFolder
-            + System.getProperty("file.separator")
-            + extThread_pyfilename;
-    private String extThread_presetfilepath = thisPluginFolder
-            + System.getProperty("file.separator")
-            + extThread_presetfilename;
-    private String extThread_historyfilepath = thisPluginFolder
-            + System.getProperty("file.separator")
-            + extThread_historyfilename;
 
+    private String[] filenames_needed_from_resource = new String[]{
+        "pDPC.py", Preset_Panel.resource_preset_filename, "history" 
+    };
+    // the first three must be main_pyfilename, presetfilename, and historyfilename, in order;
+
+////////////////////////////////////////////////////////////////////////////////
     public static mainPluginFrame getInstance(Studio gui_ref) {
         if (frame_ == null) {
             synchronized (mainPluginFrame.class) {
@@ -64,7 +56,7 @@ public class mainPluginFrame extends javax.swing.JFrame {
     }
 
     private void prepare_files() {
-        // copy whatever need in resources to thisPluginFolder
+        //create thisPluginFolder if needed
         File thisPluginFolderfile = new File(thisPluginFolder);
         if (!thisPluginFolderfile.exists()) {
             try {
@@ -74,43 +66,22 @@ public class mainPluginFrame extends javax.swing.JFrame {
             }
         }
 
+        // copy everything needed inside resources to thisPluginFolder if not exist already
         if (thisPluginFolderfile.exists()) {
-            File pyfile = new File(extThread_pyfilepath);
-            if (!pyfile.exists()) {
-                try {
-                    InputStream stream = this.getClass().getResourceAsStream("/Resources/" + extThread_pyfilename);
-                    Files.copy(stream, pyfile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    stream.close();
-                } catch (IOException ex) {
-                    System.out.println(ex.toString());
-                    Logger.getLogger(mainPluginFrame.class.getName()).log(Level.SEVERE, null, ex);
+            for (String filename : filenames_needed_from_resource) {
+                String filepath = get_extThread_filepath(filename);
+                File file = new File(filepath);
+                if (!file.exists()) {
+                    try {
+                        InputStream stream = this.getClass().getResourceAsStream("/Resources/" + filename);
+                        Files.copy(stream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        stream.close();
+                    } catch (IOException ex) {
+                        System.out.println(ex.toString());
+                        Logger.getLogger(mainPluginFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
             }
-
-            File presetfile = new File(extThread_presetfilepath);
-            if (!presetfile.exists()) {
-                try {
-                    InputStream stream = this.getClass().getResourceAsStream("/Resources/" + extThread_presetfilename);
-                    Files.copy(stream, presetfile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    stream.close();
-                } catch (IOException ex) {
-                    System.out.println(ex.toString());
-                    Logger.getLogger(mainPluginFrame.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            
-            File historyfile = new File(extThread_historyfilepath);
-            if (!historyfile.exists()) {
-                try {
-                    InputStream stream = this.getClass().getResourceAsStream("/Resources/" + extThread_historyfilename);
-                    Files.copy(stream, historyfile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    stream.close();
-                } catch (IOException ex) {
-                    System.out.println(ex.toString());
-                    Logger.getLogger(mainPluginFrame.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-
         }
     }
 
@@ -121,9 +92,10 @@ public class mainPluginFrame extends javax.swing.JFrame {
             pDPC_ExtThread_Pane.onPanelStart();
 
             pDPC_ExtThread_Pane.setpluginfolder(thisPluginFolder);
-            pDPC_ExtThread_Pane.setpyfilepath(extThread_pyfilepath);
-            pDPC_ExtThread_Pane.setpresetfilepath(extThread_presetfilepath);
-            pDPC_ExtThread_Pane.sethistoryfilepath(extThread_historyfilepath);
+
+            pDPC_ExtThread_Pane.setpyfilepath(get_extThread_filepath(filenames_needed_from_resource[0]));
+            pDPC_ExtThread_Pane.setpresetfilepath(get_extThread_filepath(filenames_needed_from_resource[1]));
+            pDPC_ExtThread_Pane.sethistoryfilepath(get_extThread_filepath(filenames_needed_from_resource[2]));
 
             pDPC_ExtThread_Pane.set_parent(gui_);
         }
@@ -161,6 +133,13 @@ public class mainPluginFrame extends javax.swing.JFrame {
         onFrameStart(gui_ref);
     }
 
+////////////////////////////////////////////////////////////////////////////////
+    private String get_extThread_filepath(String filename) {
+        return thisPluginFolder
+                + System.getProperty("file.separator")
+                + filename;
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -170,25 +149,23 @@ public class mainPluginFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        ScrollPane = new javax.swing.JScrollPane();
         pDPC_ExtThread_Pane = new PluginThreads.pDPC_ExtThread_Panel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setSize(new java.awt.Dimension(0, 0));
+
+        ScrollPane.setViewportView(pDPC_ExtThread_Pane);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(1, 1, 1)
-                .addComponent(pDPC_ExtThread_Pane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(1, 1, 1))
+            .addComponent(ScrollPane)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(1, 1, 1)
-                .addComponent(pDPC_ExtThread_Pane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(1, 1, 1))
+            .addComponent(ScrollPane)
         );
 
         pack();
@@ -231,6 +208,7 @@ public class mainPluginFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane ScrollPane;
     private PluginThreads.pDPC_ExtThread_Panel pDPC_ExtThread_Pane;
     // End of variables declaration//GEN-END:variables
 }
