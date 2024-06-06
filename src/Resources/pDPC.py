@@ -1418,7 +1418,7 @@ if __name__ == "__main__":
                                 use_advparam = False
 
                                 # set adv pDPC params back to default (ideal) params
-                                for k, v in ideal_pDPC_params.items():
+                                for k, v in ideal_pDPC_params.items(): 
                                     getattr(pDPC_ut.gui, k).value = v
                             else:
                                 raise ValueError(
@@ -1446,18 +1446,29 @@ if __name__ == "__main__":
                                 for k in list(expect_keys):
                                     know = k
                                     vnow = params[k]
+                                 
                                     if vnow is None and k not in [
                                         "dark_bkg_path",
                                         "light_bkg_path",
                                     ]:
                                         raise Exception(f"Param {k} MUST not be None")
                                     else:
-                                        getattr(pDPC_ut.gui, k).value = (
-                                            vnow
-                                            if not isinstance(vnow, str)
-                                            else literal_eval(vnow)
+                                        
+                                        vnow = vnow if not isinstance(vnow, str) else (
+                                            literal_eval(vnow) if k not in [
+                                                "dark_bkg_path",
+                                                "light_bkg_path",
+                                            ] else vnow if vnow.lower()!="none" else None
                                         )
-                            except Exception as e:
+                                        
+                                        getattr(pDPC_ut.gui, k).value = vnow  
+
+                                        # getattr(pDPC_ut.gui, k).value = (
+                                        #     vnow
+                                        #     if not isinstance(vnow, str)
+                                        #     else literal_eval(vnow)
+                                        # )
+                            except Exception as e: 
                                 raise Exception(f"Failed to set params {know}: {e:}")
 
                             if not is_live:
