@@ -1241,25 +1241,33 @@ if __name__ == "__main__":
                                 subs = pDPC_ut.get_sub_imgs(raw=img)
 
                                 subs_flatten = subs.reshape((subs.shape[0], -1))
-                                subs_flatten = subs_flatten[
-                                    :,
-                                    np.argwhere(
-                                        np.all(
-                                            subs_flatten > 0, axis=-1, keepdims=False
-                                        )
-                                    ).squeeze(),
-                                ]
+                                subs_flatten = subs_flatten.sum(axis=-1)
+
+                                # subs_flatten = subs.reshape((subs.shape[0], -1))
+                                # # flat field correction
+                                # subs_flatten /= subs_flatten.mean()
+                                # subs_flatten = subs_flatten[
+                                #     :,
+                                #     np.argwhere(
+                                #         np.all(
+                                #             (subs_flatten > 0)
+                                #             * (~np.isnan(subs_flatten))
+                                #             * (np.isfinite(subs_flatten)),
+                                #             axis=-1,
+                                #             keepdims=False,
+                                #         )
+                                #     ).squeeze(),
+                                # ]
 
                                 subs_flatten = subs_flatten / subs_flatten[i]
                                 Q2S_cali.append(
                                     (
-                                        np.median(
-                                            subs_flatten,
-                                            axis=-1,
-                                            keepdims=False,
-                                        )
-                                        .squeeze()
-                                        .tolist()
+                                        # np.median(
+                                        #     subs_flatten,
+                                        #     axis=-1,
+                                        #     keepdims=False,
+                                        # )
+                                        subs_flatten.squeeze().tolist()
                                     )
                                 )
                             Q2S_cali = np.transpose(Q2S_cali)
@@ -1446,17 +1454,39 @@ if __name__ == "__main__":
                                 for k in list(expect_keys):
                                     know = k
                                     vnow = params[k]
+
                                     if vnow is None and k not in [
                                         "dark_bkg_path",
                                         "light_bkg_path",
                                     ]:
                                         raise Exception(f"Param {k} MUST not be None")
                                     else:
-                                        getattr(pDPC_ut.gui, k).value = (
+
+                                        vnow = (
                                             vnow
                                             if not isinstance(vnow, str)
-                                            else literal_eval(vnow)
+                                            else (
+                                                literal_eval(vnow)
+                                                if k
+                                                not in [
+                                                    "dark_bkg_path",
+                                                    "light_bkg_path",
+                                                ]
+                                                else (
+                                                    vnow
+                                                    if vnow.lower() != "none"
+                                                    else None
+                                                )
+                                            )
                                         )
+
+                                        getattr(pDPC_ut.gui, k).value = vnow
+
+                                        # getattr(pDPC_ut.gui, k).value = (
+                                        #     vnow
+                                        #     if not isinstance(vnow, str)
+                                        #     else literal_eval(vnow)
+                                        # )
                             except Exception as e:
                                 raise Exception(f"Failed to set params {know}: {e:}")
 
