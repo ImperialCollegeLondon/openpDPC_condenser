@@ -281,7 +281,7 @@ def read_imagej_tif(
                     (
                         ij_mtdt[key]
                         if key in ij_mtdt.keys()
-                        else ("sec" if i == 0 else tiff.TIFF.RESUNIT.NONE)
+                        else ("sec" if i == 0 else tiff.RESUNIT.NONE)
                     )  # "-"
                     for i, key in enumerate(["tunit", "zunit", "yunit", "unit"])
                 ]
@@ -343,7 +343,7 @@ def write_imagej_tif(
             res_keys, unit_keys, res_info[0], res_info[1]
         ):
             ij_mtdt[res_key] = res
-            if res_unit is not tiff.TIFF.RESUNIT.NONE:
+            if res_unit is not tiff.RESUNIT.NONE:
                 ij_mtdt[unit_key] = res_unit
 
     with tiff.TiffWriter(sv_path, imagej=True) as tif:
@@ -731,7 +731,7 @@ class pDPC_Params_GUI:
 
         # update flags & attr separately
         if info.signal.name not in [
-            "seq",
+            # "seq", # seq change will also affect OTFs -
             "dark_bkg_path",
             "light_bkg_path",
             "reg_p",
@@ -746,7 +746,7 @@ class pDPC_Params_GUI:
             "Q2S",
             "sp_pattern",
             "binning",
-            "seq",
+            # "seq", -
             "dark_bkg_path",
             "light_bkg_path",
         ]:
@@ -768,7 +768,8 @@ class pDPC_Params_GUI:
             return None
         else:
             # determine sequence of sub-images determined by seq
-            sequence = [seqs[self.seq % num_seqs].index(i) for i in range(num_subs)]
+            # sequence = [seqs[self.seq % num_seqs].index(i) for i in range(num_subs)] -
+            sequence = [0, 1, 2, 3]
 
             # get sub-images by slicing array using index & in the right sequence order
             h, w = tuple(2 * (sz // 2) for sz in raw.shape[-2:])
@@ -870,6 +871,7 @@ class pDPC_Params_GUI:
                 return S, P
         else:
             mtx = np.asarray(self.Q2S if self.sp_pattern == SP_pattern.sub else Q2H)
+
             if self.use_pupil:
                 P = np.tensordot(
                     mtx**0.5, P, axes=(-1, 0)
@@ -918,27 +920,32 @@ class pDPC_Params_GUI:
         )[None, ...]
 
         moveYX_F = self.P_moveYX_F if self.use_pupil else self.S_moveYX_F
+
+        masks = [
+            (
+                math.cos(angle + math.pi + self.quadRotate_rad) * (fy - moveYX_F[0])
+                > math.sin(angle + math.pi + self.quadRotate_rad) * (fx - moveYX_F[1])
+                + tolerance
+                + self.quadGap_F
+            )
+            * (
+                math.cos(angle + math.pi * 3 / 2 + self.quadRotate_rad)
+                * (fy - moveYX_F[0])
+                + tolerance
+                + self.quadGap_F
+                < math.sin(angle + math.pi * 3 / 2 + self.quadRotate_rad)
+                * (fx - moveYX_F[1])
+            )
+            for angle in angles
+        ]  # -
+
+        # move quad mask by seq -
+        sequence = [seqs[self.seq % num_seqs].index(i) for i in range(num_subs)]
+        masks = [masks[i] for i in sequence]
+
+        # multiply masks by quadNorm_coeff -
         masks = np.stack(
-            [
-                coeff
-                * (
-                    math.cos(angle + math.pi + self.quadRotate_rad) * (fy - moveYX_F[0])
-                    > math.sin(angle + math.pi + self.quadRotate_rad)
-                    * (fx - moveYX_F[1])
-                    + tolerance
-                    + self.quadGap_F
-                )
-                * (
-                    math.cos(angle + math.pi * 3 / 2 + self.quadRotate_rad)
-                    * (fy - moveYX_F[0])
-                    + tolerance
-                    + self.quadGap_F
-                    < math.sin(angle + math.pi * 3 / 2 + self.quadRotate_rad)
-                    * (fx - moveYX_F[1])
-                )
-                for coeff, angle in zip(self.quadNorm_coeff, angles)
-            ],
-            axis=0,
+            [mask * coeff for mask, coeff in zip(masks, self.quadNorm_coeff)], axis=0
         )
 
         if self.use_pupil:
@@ -1114,14 +1121,14 @@ class pDPC_MM2(pDPC_Params_GUI):
             self.OTFs = self.gen_OTFs_shortcut(rawImgYXSize=raw.shape[-2:])[:2]
             self.isOTFsReady = True
 
-        phase, _ = deconv_Lsq_Phase(
+        phase, amplitude = deconv_Lsq_Phase(
             imgsF=raw_4_F,
             OTFs=self.OTFs,
             reg_p=self.reg_p,
             reg_u=self.reg_u,
         )
 
-        return phase.astype(np.float32)
+        return phase.astype(np.float32), amplitude.astype(np.float32)
 
 
 if __name__ == "__main__":
@@ -1139,12 +1146,15 @@ if __name__ == "__main__":
         "light_bkg_path": None,
     }
     pDPC_ut = pDPC_MM2(**ideal_pDPC_params)
+    do_absorption = False  # - 2024-10-29
 
     try:
         port = int(sys.argv[1])
         goodsign = sys.argv[2]
         badsign = sys.argv[3]
         exitsign = sys.argv[4]
+        recvbit = int(sys.argv[5])  # -
+        do_absorption = sys.argv[6].lower().startswith("t")  # - 2024-10-29
     except Exception as e:
         print(e)
         port = -1
@@ -1168,7 +1178,7 @@ if __name__ == "__main__":
             print("Listening from:" + str(port) + " on " + str(host))
             while True:
                 try:
-                    data = s.recv(1024).decode("utf-8").strip()
+                    data = s.recv(recvbit).decode("utf-8").strip()  # -
                 except:
                     print("Failed to receive data")
                     break
@@ -1461,7 +1471,6 @@ if __name__ == "__main__":
                                     ]:
                                         raise Exception(f"Param {k} MUST not be None")
                                     else:
-
                                         vnow = (
                                             vnow
                                             if not isinstance(vnow, str)
@@ -1504,11 +1513,14 @@ if __name__ == "__main__":
                             raw_3d = np.reshape(raw, newshape=(-1, h, w))
 
                             if is_live:
-                                phase_3d = pDPC_ut.recon(raw=raw_3d)
+                                phase_3d, amp_3d = pDPC_ut.recon(raw=raw_3d)
                             else:
                                 phase_3d = []
+                                amp_3d = []
                                 for i in range(raw_3d.shape[0]):
-                                    phase_3d.append(pDPC_ut.recon(raw=raw_3d[i]))
+                                    phase_tmp, amp_tmp = pDPC_ut.recon(raw=raw_3d[i])
+                                    phase_3d.append(phase_tmp)
+                                    amp_3d.append(amp_tmp)
                                     info = (
                                         goodsign
                                         + f":{max(0, ((100*(i+1))//raw_3d.shape[0])-1):d}"
@@ -1516,9 +1528,13 @@ if __name__ == "__main__":
                                     s.sendall((info + "\r\n").encode("utf-8"))
                                 info = goodsign + f":100"
                                 phase_3d = np.stack(phase_3d, axis=0)
+                                amp_3d = np.stack(amp_3d, axis=0)
 
                             phase = np.reshape(
                                 phase_3d, newshape=oldshape + phase_3d.shape[-2:]
+                            )
+                            amplitude = np.reshape(
+                                amp_3d, newshape=oldshape + amp_3d.shape[-2:]
                             )
 
                             if is_live:
@@ -1530,12 +1546,51 @@ if __name__ == "__main__":
                                 # modevalue = mode(phase[:] ,keepdims=False)[0]
                                 phase = phase - modevalue
 
+                            # calculate pixel size in output image
+                            px_sz_um = pDPC_ut.px_um * pDPC_ut.binning
+
                             write_imagej_tif(
                                 sv_path=phasepath,
                                 data=phase,
-                                res_info=None,
+                                res_info=[
+                                    (None, None, px_sz_um, px_sz_um),
+                                    (tiff.RESUNIT.NONE, tiff.RESUNIT.NONE, "um", "um"),
+                                ],
                                 description=pDPC_ut.get_json(),
                             )
+
+                            if do_absorption:  # - 2024-10-29
+                                # also save amplitude
+                                if is_live:
+                                    amplitudepath = pathlib.Path(phasepath).with_stem(
+                                        "absorption"
+                                    )
+                                else:
+                                    name_orig = pathlib.Path(phasepath).stem
+                                    if name_orig.lower().startswith("phase"):
+                                        newname = (
+                                            "absorption" + name_orig[len("phase") :]
+                                        )
+                                    else:
+                                        newname = "absorption_" + name_orig
+                                    amplitudepath = pathlib.Path(phasepath).with_stem(
+                                        newname
+                                    )
+                                write_imagej_tif(
+                                    sv_path=amplitudepath,
+                                    data=amplitude,
+                                    res_info=[
+                                        (None, None, px_sz_um, px_sz_um),
+                                        (
+                                            tiff.RESUNIT.NONE,
+                                            tiff.RESUNIT.NONE,
+                                            "um",
+                                            "um",
+                                        ),
+                                    ],
+                                    description=pDPC_ut.get_json(),
+                                )
+
                         except Exception as e:
                             info = badsign + f":{e}"
 
