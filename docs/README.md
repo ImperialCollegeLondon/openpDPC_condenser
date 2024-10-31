@@ -151,7 +151,7 @@ _If video is not shown in browser, click [here](LiveSplit.mp4) to download and v
     `Socket BufSize` and `Do Absorption`, highlighted by green and orange circles in the figure below respectively.
     Note that both need to be set before launching python process to really take effect.
         <p align="center">
-        <img src=updates_gui_20241029.png width="100%" title="GUI updates - 20241029"/>
+        <img src="updates_gui_20241029.png" width="100%" title="GUI updates - 20241029"/>
         </p>   
 
         - `Socket BufSize` is the socket buffer size that python will use to receive data from the plugin.
