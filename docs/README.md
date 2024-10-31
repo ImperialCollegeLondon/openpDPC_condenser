@@ -146,6 +146,23 @@ _If video is not shown in browser, click [here](LiveSplit.mp4) to download and v
 	
 	_If video is not shown in browser, click [here](launch_python_process.mp4) to download and view it._
 
+    **_Updates_**:
+    - 2024-Oct-29: Added two settings to be set before launching python process: 
+    `Socket BufSize` and `Do Absorption`, highlighted by green and orange circles in the figure below respectively.
+    Note that both need to be set before launching python process to really take effect.
+        <p align="center">
+        <img src=updates_gui_20241029.png width="100%" title="GUI updates - 20241029"/>
+        </p>   
+
+        - `Socket BufSize` is the socket buffer size that python will use to receive data from the plugin.
+        By default, it is set as 1024. When long params are passed to python, 
+        e.g., a `dark_bkg_path` or `light_bkg_path` with a long path string, 
+        one can increase this value to avoid data truncation during data transmission and hence avoid error raised from python side.
+        - `Do Absorption` is a boolean flag to specify whether to save the absorption image calculated as well.
+        If set as true, the absorption image will be saved to the same folder as the phase image.
+            - If the name of saved phase image is `phase*`, the absorption image will be saved as `absorption*`.
+            - Otherwise, the absorption image will be saved by adding `absorption_` to the name of saved phase image.
+
 - Stop python process
 
 	<video width="100%" controls>

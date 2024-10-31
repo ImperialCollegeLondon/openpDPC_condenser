@@ -32,6 +32,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import org.micromanager.Studio;
 import org.micromanager.data.Image;
@@ -109,7 +111,9 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
     private String badsign = "error";
     private String exitsign = "exit";
     private String pystartsign = "python program started";
-
+    
+    private boolean do_absorption = false;
+    private int sock_bufsize = 1024; 
     private double loopThread_timeOutSec = 5;
     private double pDPClive_timeOutSec = 1;
     private double pDPCrecon_timeOutSec = 1;
@@ -223,11 +227,13 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
             }
 
             String activate_conda = choose_Python_Pane.get_conda_activate_cmd(choose_Python_Pane.get_conda_path());
-            String activate_env = choose_Python_Pane.get_env_activate_cmd(choose_Python_Pane.get_current_conda_env());
+            String activate_env = choose_Python_Pane.get_env_activate_cmd(choose_Python_Pane.get_current_conda_env()); 
             String run_pyfile = "python" + " "
                     + "\"" + pyfilepath + "\""
                     + " " + String.valueOf(Socket_Pane.get_SocketPort())
-                    + " " + goodsign + " " + badsign + " " + exitsign;
+                    + " " + goodsign + " " + badsign + " " + exitsign 
+                    + " " + String.valueOf(sock_bufsize) 
+                    + " " + String.valueOf(do_absorption);
             cmdRun_Pane.onSelectCMDrun();
             cmdRun_Pane.Send(activate_conda);
             cmdRun_Pane.Send(activate_env);
@@ -479,6 +485,7 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
                     double reconImgTimeOutSec = -1;
                     double caliImgTimeOutSec = -1;
                     int socketPort = -1;
+                    int sockBufSize = -1;
 
                     for (String line : lines) {
                         if (line.startsWith("conda_path=")) {
@@ -522,6 +529,13 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
                                 socketPort = -1;
                             }
                         }
+                        if (line.startsWith("sockBufSize=")) {
+                            try {
+                                sockBufSize = Integer.parseInt(line.replaceFirst("sockBufSize=", ""));
+                            } catch (Exception e) {
+                                sockBufSize = -1;
+                            }
+                        }
                     }
 
                     if (conda_path != null) {
@@ -549,6 +563,10 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
                     if (socketPort > 0) {
                         Socket_Pane.set_SocketPort(socketPort);
                     }
+                    if (sockBufSize > 0){
+                        jsp_sock_bufsize.setValue(sockBufSize);
+                        update_sock_bufsize();
+                    }
 
                 } catch (Exception e) {
                     if (verbose) {
@@ -572,13 +590,15 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
                 String recontimeout_str = "reconImgTimeOutSec=" + String.valueOf(pDPCrecon_timeOutSec);
                 String calitimeout_str = "caliImgTimeOutSec=" + String.valueOf(pDPCcali_timeOutSec);
                 String sock_port_str = "socketPort=" + Socket_Pane.get_SocketPort_string();
+                String sock_bufsize_str = "sockBufSize=" + String.valueOf(sock_bufsize);
 
                 String jstr = conda_path_str + "\n" + conda_env_str
                         + "\n" + loopthreadtimeout_str
                         + "\n" + imglivetimeout_str
                         + "\n" + recontimeout_str
                         + "\n" + calitimeout_str
-                        + "\n" + sock_port_str;
+                        + "\n" + sock_port_str
+                        + "\n" + sock_bufsize_str;
                 BufferedWriter writer;
                 try {
                     writer = new BufferedWriter(new FileWriter(historyfile));
@@ -688,8 +708,12 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
 
     }
 
-////////////////////////////////////////////////////////////////////////////////
-    public void update_loopThread_timeOutSec() {
+////////////////////////////////////////////////////////////////////////////////  
+    public void update_sock_bufsize(){
+        sock_bufsize = (int) jsp_sock_bufsize.getValue();  
+    }
+    
+    public void update_loopThread_timeOutSec() { 
         loopThread_timeOutSec = (double) jsp_loopThread_timeOutSec.getValue();
     }
 
@@ -892,7 +916,11 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
     public void onChange_cbx_useadvparams() {
         preset_Pane.set_hideadv(!cbx_useadvparams.isSelected());
     }
-
+    
+    public void onChanged_cbx_doAbsorption() {
+        do_absorption = cbx_doAbsorption.isSelected();
+    }
+    
 ////////////////////////////////////////////////////////////////////////////////
     private void setEnabled_choose_Python_Pane(boolean enabled) {
         for (Component item : choose_Python_Pane.getComponents()) {
@@ -1069,6 +1097,9 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
         tbt_loopThread_on = new javax.swing.JToggleButton();
         jLabel3 = new javax.swing.JLabel();
         jsp_loopThread_timeOutSec = new javax.swing.JSpinner();
+        jsp_sock_bufsize = new javax.swing.JSpinner();
+        jLabel2 = new javax.swing.JLabel();
+        cbx_doAbsorption = new javax.swing.JCheckBox();
         operate_modes_Pane = new javax.swing.JPanel();
         tbp_modes = new javax.swing.JTabbedPane();
         live_scrollPane = new javax.swing.JScrollPane();
@@ -1138,6 +1169,24 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
             }
         });
 
+        jsp_sock_bufsize.setModel(new javax.swing.SpinnerNumberModel(1024, 2, null, 1024));
+        jsp_sock_bufsize.setValue(this.sock_bufsize);
+        jsp_sock_bufsize.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                jsp_sock_bufsizeStateChanged(evt);
+            }
+        });
+
+        jLabel2.setText("Socket BufSize:");
+
+        cbx_doAbsorption.setSelected(this.do_absorption);
+        cbx_doAbsorption.setText("Do Absorption");
+        cbx_doAbsorption.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbx_doAbsorptionActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout launch_stop_PaneLayout = new javax.swing.GroupLayout(launch_stop_Pane);
         launch_stop_Pane.setLayout(launch_stop_PaneLayout);
         launch_stop_PaneLayout.setHorizontalGroup(
@@ -1145,21 +1194,29 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
             .addGroup(launch_stop_PaneLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(tbt_loopThread_on)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jsp_loopThread_timeOutSec, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jsp_loopThread_timeOutSec, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jsp_sock_bufsize, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(cbx_doAbsorption)
+                .addContainerGap(9, Short.MAX_VALUE))
         );
         launch_stop_PaneLayout.setVerticalGroup(
             launch_stop_PaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(launch_stop_PaneLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(launch_stop_PaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(launch_stop_PaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jsp_loopThread_timeOutSec, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel3))
-                    .addComponent(tbt_loopThread_on))
+                .addGroup(launch_stop_PaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tbt_loopThread_on)
+                    .addComponent(jLabel3)
+                    .addComponent(jsp_loopThread_timeOutSec, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
+                    .addComponent(jsp_sock_bufsize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cbx_doAbsorption))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1319,7 +1376,7 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
             .addGroup(recon_PaneLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(recon_PaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pDPCrecon_path_Pane, javax.swing.GroupLayout.DEFAULT_SIZE, 569, Short.MAX_VALUE)
+                    .addComponent(pDPCrecon_path_Pane, javax.swing.GroupLayout.DEFAULT_SIZE, 599, Short.MAX_VALUE)
                     .addComponent(doRecon_Pane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1426,7 +1483,7 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
             .addGroup(cali_PaneLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(cali_PaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pDPCcali_path_Pane, javax.swing.GroupLayout.DEFAULT_SIZE, 569, Short.MAX_VALUE)
+                    .addComponent(pDPCcali_path_Pane, javax.swing.GroupLayout.DEFAULT_SIZE, 599, Short.MAX_VALUE)
                     .addComponent(doCali_Pane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1706,12 +1763,23 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_bt_update_pDPCcali_result_to_current_settingsActionPerformed
 
+    private void jsp_sock_bufsizeStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jsp_sock_bufsizeStateChanged
+        // TODO add your handling code here:
+        update_sock_bufsize();
+    }//GEN-LAST:event_jsp_sock_bufsizeStateChanged
+
+    private void cbx_doAbsorptionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbx_doAbsorptionActionPerformed
+        // TODO add your handling code here:
+        onChanged_cbx_doAbsorption();
+    }//GEN-LAST:event_cbx_doAbsorptionActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bt_update_pDPCcali_result_to_current_settings;
     private javax.swing.JPanel cali_Pane;
     private javax.swing.JScrollPane cali_scrollPane;
     private javax.swing.JCheckBox cbx_cancheckadv;
+    private javax.swing.JCheckBox cbx_doAbsorption;
     private javax.swing.JCheckBox cbx_openphase_afrecon;
     private javax.swing.JCheckBox cbx_useadvparams;
     private javax.swing.JCheckBox cbx_verbose;
@@ -1721,6 +1789,7 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
     private javax.swing.JPanel general_setting_Pane;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel6;
@@ -1728,6 +1797,7 @@ public class pDPC_ExtThread_Panel extends javax.swing.JPanel {
     private javax.swing.JSpinner jsp_pDPCcali_timeOutSec;
     private javax.swing.JSpinner jsp_pDPClive_timeOutSec;
     private javax.swing.JSpinner jsp_pDPCrecon_timeOutSec;
+    private javax.swing.JSpinner jsp_sock_bufsize;
     private javax.swing.JPanel launch_stop_Pane;
     private javax.swing.JPanel launch_stop_python_Pane;
     private javax.swing.JLabel lb_pbvalue;
