@@ -7,7 +7,7 @@ current_preset:
 "seq"@"Integer"@"7"@"7"@"0"@"false"
 "binning"@"Integer"@"1"@""@"1"@"false"
 "use_pupil"@"Boolean"@"false"@""@""@"false"
-"reg_p"@"Double"@"0.005"@""@"0.0"@"false"
+"reg_p"@"Double"@"0.01"@""@"0.0"@"false"
 "reg_u"@"Double"@"1.0E-5"@""@""@"false"
 "px_cam_um"@"Double"@"3.45"@""@"0.0"@"false"
 "Q2S"@"String"@"[[1.0, 0.5, 0.5, 0.0], [0.5, 1.0, 0.0, 0.5], [ 0.5, 0.0, 1.0, 0.5], [ 0.0, 0.5, 0.5, 1.0]]"@""@""@"true"

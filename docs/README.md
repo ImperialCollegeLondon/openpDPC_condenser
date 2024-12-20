@@ -16,6 +16,7 @@ Table of Contents
       - [Launch/Stop python background process](#launchstop-python-background-process)
       - [Parameters \& Presets](#parameters--presets)
         - [Physical meaning of pDPC parameters](#physical-meaning-of-pdpc-parameters)
+  - [References](#references)
 
 # MM2_pDPC  
 
@@ -23,8 +24,7 @@ Table of Contents
 
 ### Introduction
 
-This is a plugin for *&mu;Manager* (MM) (version 2.0 or later) to perform image processing etc. for polarisation-resolved differential phase contrast (_pDPC_) microscopy. For details on the _pDPC_ technique, see [this paper](https://onlinelibrary.wiley.com/doi/full/10.1002/jbio.202100144). 
-
+This is a plugin for *&mu;Manager* (MM) (version 2.0 or later) to perform image processing etc. for polarisation-resolved differential phase contrast (_pDPC_) microscopy. For details on the _pDPC_ technique, see Ref. [[1](#references)]. 
 
 This plugin provides four main features:
 - _**Live**_: 
@@ -42,6 +42,8 @@ This plugin provides four main features:
 - _**LiveSplit**_: 
 
 	Interleave the raw camera image acquired by MM LiveSnap into four sub channel images and then live display the four sub channel images.
+
+**The python code for the phase reconstruction process in this plugin is based on the DPC principle in Ref. [[2-4](#references)] and adapted from Ref. [[5-6](#references)].**
 
 ### Important notes 
 - Among above features, _**Live**_, _**Recon**_, and _**Cali**_ rely on image processing in python and cannot be used simultaneously, while _**LiveSplit**_ does not. 
@@ -210,3 +212,11 @@ If `Use advanced pDPC params` is not selected, only basic parameters in `Current
     - sp_pattern: 0-2 integer, to specify how sub polarisation channel images are used during phase reconstruction; should always be 1 (default) for now;
     - dark_bkg_path: path to the dark background image file; default "None";
     - light_bkg_path: path to the light background image file; default "None";
+
+## References
+[1] R. Kalita, W. Flanagan, J. Lightley, S. Kumar, Y. Alexandrov, E. Garcia, M. Hintze, M. Barkoulas, C. Dunsby, P.M.W. French, Single-shot phase contrast microscopy using polarisation-resolved differential phase contrast, J. Biophotonics (2021). https://doi.org/10.1002/jbio.202100144.   
+[2] L. Tian, L. Waller, Quantitative differential phase contrast imaging in an LED array microscope, Opt. Express 23 (2015). https://doi.org/10.1364/oe.23.011394.   
+[3] Z.F. Phillips, M. Chen, L. Waller, Single-shot quantitative phase microscopy with color-multiplexed differential phase contrast (cDPC), PLoS One 12 (2017). https://doi.org/10.1371/journal.pone.0171228.   
+[4] M. Chen, Z.F. Phillips, L. Waller, Quantitative differential phase contrast (DPC) microscopy with computational aberration correction, Opt. Express 26 (2018) 32888–32899. https://doi.org/10.1364/OE.26.032888.   
+[5] https://github.com/Waller-Lab/DPC   
+[6] https://github.com/Waller-Lab/DPC_withAberrationCorrection
